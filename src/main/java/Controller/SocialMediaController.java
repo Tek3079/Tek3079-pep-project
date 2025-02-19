@@ -1,5 +1,7 @@
 package Controller;
 
+import java.util.List;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -30,6 +32,11 @@ public class SocialMediaController {
         app.post("/register", this::registerHandler);
         app.post("/login", this::loginHandler);
         app.post("/messages", this::createMessage);
+        app.get("/messages", this::getAllMessage);
+        app.get("/messages/{message_id}", this::getMessageById);
+        app.delete("/messages/{message_id}", this::deleteMessage);
+        app.get("/accounts/{account_id}/messages", this::getAllMessageByUser);
+        app.patch("/messages/{message_id}", this::updateMessage);
        // app.start(8080);
         return app;
     }
@@ -83,5 +90,48 @@ private void createMessage(Context ctx) throws JsonProcessingException{
         ctx.status(400);
     }
 }
+public void getAllMessage(Context ctx){
+    List <Message> ms = messageService.getAllMessage();
+    ctx.json(ms);
+}
+public void getMessageById(Context ctx){
+    int id = Integer.parseInt(ctx.pathParam("message_id"));
+Message ms = messageService.getMessageById(id);
+if (ms == null) {
+    ctx.status(200); // Return 200 with an empty response
+} else {ctx.json(ms);
+}
+}
+public void deleteMessage(Context ctx){
+    int id = Integer.parseInt(ctx.pathParam("message_id"));
+    Message message = messageService.deleteMessage(id);
+    if(message == null){
+        ctx.status(200);
+    }else{
+        ctx.json(message);
+    }
+}
+public void getAllMessageByUser(Context ctx){
+    int id = Integer.parseInt(ctx.pathParam("account_id"));
+    List<Message> ms = messageService.getAllMessageByUser(id);
+    ctx.json(ms);
+}
+public void updateMessage(Context ctx){
+    int id = Integer.parseInt(ctx.pathParam("message_id"));
+    try{
+    ObjectMapper om = new ObjectMapper();
+    Message messageText = om.readValue(ctx.body(), Message.class);
+    String text = messageText.getMessage_text();
+    Message ms = messageService.updateMessage(id , text);
+    if (ms != null){
+        ctx.json(ms);    
+    }else{
+        ctx.status(400);
+    }
+    }catch(JsonProcessingException e){
+        System.out.println(e.getMessage());
+    }
+  
 
+}
 }
